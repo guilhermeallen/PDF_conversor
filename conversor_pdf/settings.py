@@ -19,13 +19,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-4znf^=3m_cq)y!pb9bb*7z+zx(32in2rz77v9$u6@z&16g^5t9"
+SECRET_KEY = config('SECRET_KEY', default='chave-secreta-fake')
+DEBUG = config('DEBUG', default=True, cast=bool)
+ALLOWED_HOSTS = ['*']
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -75,11 +72,9 @@ WSGI_APPLICATION = "conversor_pdf.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    'default': dj_database_url.config(default='sqlite:///db.sqlite3', conn_max_age=600)
 }
+
 
 
 # Password validation
@@ -117,12 +112,21 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # o restante já existente...
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+import dj_database_url
+from decouple import config
 import os
 
 MEDIA_URL = '/media/'
