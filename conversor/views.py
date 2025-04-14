@@ -1,17 +1,27 @@
 from django.shortcuts import render
-from .forms import ArquivoForm
-from .utils import converter_para_pdf
+from django.http import HttpResponse
+from PyPDF2 import PdfMerger
+from io import BytesIO
 
-def upload_arquivo(request):
+def converter_view(request):
     if request.method == 'POST':
-        form = ArquivoForm(request.POST, request.FILES)
-        if form.is_valid():
-            arquivo = form.save()
-            converter_para_pdf(arquivo)
-            return render(request, 'conversor/sucesso.html', {'arquivo': arquivo})
-    else:
-        form = ArquivoForm()
-    return render(request, 'conversor/upload.html', {'form': form})
+        arquivos = request.FILES.getlist('arquivos')
+        
+        if not arquivos:
+            return render(request, 'conversor/upload.html', {'erro': 'Envie pelo menos um arquivo.'})
 
+        merger = PdfMerger()
 
-# Create your views here.
+        for arquivo in arquivos:
+            merger.append(arquivo)
+
+        buffer = BytesIO()
+        merger.write(buffer)
+        merger.close()
+        buffer.seek(0)
+
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="resultado.pdf"'
+        return response
+
+    return render(request, 'conversor/upload.html')
